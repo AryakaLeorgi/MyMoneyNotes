@@ -353,18 +353,18 @@ fun StatistikTab(transactions: List<Transaction>) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(IncomeGreen))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Masuk ${incomePct.roundToInt()}%", color = Color.White)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Pemasukan", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        Text(formatCurrency(totalIncome), color = IncomeGreen, fontWeight = FontWeight.Bold)
+                        Text("${incomePct.roundToInt()}%", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(ExpenseRed))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Keluar ${expensePct.roundToInt()}%", color = Color.White)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Pengeluaran", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        Text(formatCurrency(totalExpense), color = ExpenseRed, fontWeight = FontWeight.Bold)
+                        Text("${expensePct.roundToInt()}%", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                     }
                 }
 
