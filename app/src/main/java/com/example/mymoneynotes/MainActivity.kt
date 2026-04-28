@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -48,6 +49,13 @@ import java.util.*
 import kotlin.math.roundToInt
 
 // --- Models & Data ---
+
+enum class DateFilter(val label: String) {
+    THIRTY_DAYS("30 Hari"),
+    HALF_YEAR("6 Bulan"),
+    YEAR("1 Tahun"),
+    ALL_TIME("Selamanya")
+}
 
 enum class TransactionType { INCOME, EXPENSE }
 
@@ -209,7 +217,63 @@ fun MyMoneyApp(viewModel: MyMoneyViewModel) {
 
 @Composable
 fun BerandaTab(viewModel: MyMoneyViewModel, onNavigate: (Int) -> Unit) {
+    var selectedFilter by remember { mutableStateOf(DateFilter.ALL_TIME) }
+    var expanded by remember { mutableStateOf(false) }
+
+    val startTime = remember(selectedFilter) {
+        val calendar = Calendar.getInstance()
+        when (selectedFilter) {
+            DateFilter.THIRTY_DAYS -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -30)
+                calendar.timeInMillis
+            }
+            DateFilter.HALF_YEAR -> {
+                calendar.add(Calendar.MONTH, -6)
+                calendar.timeInMillis
+            }
+            DateFilter.YEAR -> {
+                calendar.add(Calendar.YEAR, -1)
+                calendar.timeInMillis
+            }
+            DateFilter.ALL_TIME -> 0L
+        }
+    }
+
+    val filteredTransactions = viewModel.transactions.filter { it.date >= startTime }
+    val totalIncome = filteredTransactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+    val totalExpense = filteredTransactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+    val balance = totalIncome - totalExpense
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Filter: ", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+            Box {
+                TextButton(onClick = { expanded = true }) {
+                    Text(selectedFilter.label, color = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    DateFilter.values().forEach { filter ->
+                        DropdownMenuItem(
+                            text = { Text(filter.label, color = Color.White) },
+                            onClick = {
+                                selectedFilter = filter
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         // Balance Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -222,7 +286,7 @@ fun BerandaTab(viewModel: MyMoneyViewModel, onNavigate: (Int) -> Unit) {
             ) {
                 Text("Total Saldo", color = Color.LightGray, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    formatCurrency(viewModel.balance),
+                    formatCurrency(balance),
                     style = MaterialTheme.typography.displaySmall,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
@@ -231,18 +295,18 @@ fun BerandaTab(viewModel: MyMoneyViewModel, onNavigate: (Int) -> Unit) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("▼ Pemasukan", color = Color.LightGray, style = MaterialTheme.typography.labelMedium)
-                        Text(formatCurrency(viewModel.totalIncome), color = IncomeGreen, fontWeight = FontWeight.Bold)
+                        Text(formatCurrency(totalIncome), color = IncomeGreen, fontWeight = FontWeight.Bold)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("▲ Pengeluaran", color = Color.LightGray, style = MaterialTheme.typography.labelMedium)
-                        Text(formatCurrency(viewModel.totalExpense), color = ExpenseRed, fontWeight = FontWeight.Bold)
+                        Text(formatCurrency(totalExpense), color = ExpenseRed, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Transaksi Terakhir", style = MaterialTheme.typography.titleMedium, color = Color.White)
             Text("Lihat Semua →", color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { onNavigate(2) })
         }
