@@ -250,7 +250,7 @@ fun BerandaTab(viewModel: MyMoneyViewModel, onNavigate: (Int) -> Unit) {
         val recent = viewModel.transactions.sortedByDescending { it.date }.take(5)
         if (recent.isEmpty()) {
             Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                Text("Belum ada transaksi 🍃", color = Color.Gray)
+                Text("Belum ada transaksi", color = Color.Gray)
             }
         } else {
             recent.forEach { tx ->
@@ -333,7 +333,7 @@ fun StatistikTab(transactions: List<Transaction>) {
                 
                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     if (total == 0.0) {
-                        Text("Belum ada data 🍩", color = Color.Gray)
+                        Text("Belum ada data", color = Color.Gray)
                     } else {
                         Canvas(modifier = Modifier.size(160.dp)) {
                             val strokeWidth = 32.dp.toPx()
@@ -508,7 +508,7 @@ fun RiwayatTab(transactions: List<Transaction>, onEdit: (Transaction) -> Unit, o
         
         if (transactions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Riwayat kosong \uD83D\uDCEB", color = Color.Gray)
+                Text("Riwayat kosong", color = Color.Gray)
             }
         } else {
             LazyColumn {
