@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -627,15 +628,13 @@ fun AddEditTransactionDialog(
     onDismiss: () -> Unit,
     onConfirm: (TransactionType, String, String, String, Double, Long) -> Unit
 ) {
-    var step by remember { mutableIntStateOf(0) }
-    
     var type by remember { mutableStateOf(transaction?.type ?: TransactionType.EXPENSE) }
     var selectedDate by remember { mutableLongStateOf(transaction?.date ?: System.currentTimeMillis()) }
-    var selectedCat by remember { 
+    var selectedCat by remember {
         mutableStateOf(
-            transaction?.let { Category(it.category, it.emoji, it.type) } 
+            transaction?.let { Category(it.category, it.emoji, it.type) }
                 ?: PREDEFINED_CATEGORIES.first { it.type == TransactionType.EXPENSE }
-        ) 
+        )
     }
     var description by remember { mutableStateOf(transaction?.description ?: "") }
     var amountText by remember { mutableStateOf(if (transaction != null) formatAmountDots(transaction.amount.toLong().toString()) else "") }
@@ -646,142 +645,133 @@ fun AddEditTransactionDialog(
         selectedCat = availableCats.first()
     }
 
-    val totalSteps = 5
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Column {
-                Text(if (transaction == null) "Tambah Transaksi" else "Edit Transaksi", color = Color.White)
-                Spacer(Modifier.height(8.dp))
-                // Step indicator
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    for (i in 0 until totalSteps) {
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (i == step) MaterialTheme.colorScheme.primary else Color.Gray))
-                    }
-                }
-            }
+            Text(if (transaction == null) "Tambah Transaksi" else "Edit Transaksi", color = Color.White)
         },
         containerColor = MaterialTheme.colorScheme.surfaceVariant,
         text = {
-            Column(modifier = Modifier.height(220.dp), verticalArrangement = Arrangement.Center) {
-                when (step) {
-                    0 -> { // Type
-                        Text("Tipe Transaksi", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                            FilterChip(
-                                selected = type == TransactionType.EXPENSE,
-                                onClick = { type = TransactionType.EXPENSE },
-                                label = { Text("Pengeluaran") }
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            FilterChip(
-                                selected = type == TransactionType.INCOME,
-                                onClick = { type = TransactionType.INCOME },
-                                label = { Text("Pemasukan") }
-                            )
-                        }
-                    }
-                    1 -> { // Date
-                        Text("Tanggal", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.DateRange, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(formatDate(selectedDate), color = Color.White)
-                        }
-                        if (showDatePicker) {
-                            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
-                            DatePickerDialog(
-                                onDismissRequest = { showDatePicker = false },
-                                confirmButton = {
-                                    TextButton(onClick = {
-                                        datePickerState.selectedDateMillis?.let { selectedDate = it }
-                                        showDatePicker = false
-                                    }) { Text("OK") }
-                                },
-                                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Batal") } }
-                            ) {
-                                DatePicker(state = datePickerState)
-                            }
-                        }
-                    }
-                    2 -> { // Category
-                        Text("Kategori", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(4),
-                            modifier = Modifier.height(160.dp)
-                        ) {
-                            items(availableCats) { cat ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (selectedCat.name == cat.name) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.Transparent)
-                                        .clickable { selectedCat = cat }
-                                        .padding(8.dp)
-                                ) {
-                                    Text(cat.emoji, fontSize = 24.sp)
-                                    Text(cat.name, fontSize = 10.sp, color = Color.LightGray, maxLines = 1)
-                                }
-                            }
-                        }
-                    }
-                    3 -> { // Description
-                        Text("Deskripsi (Opsional)", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
-                            label = { Text("Catatan...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
-                        )
-                    }
-                    4 -> { // Amount
-                        Text("Nominal", color = Color.White, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = amountText,
-                            onValueChange = { raw -> 
-                                val digitsOnly = raw.filter { it.isDigit() }
-                                amountText = formatAmountDots(digitsOnly)
-                            },
-                            label = { Text("Rp") },
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Tipe Transaksi", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    FilterChip(
+                        selected = type == TransactionType.EXPENSE,
+                        onClick = { type = TransactionType.EXPENSE },
+                        label = { Text("Pengeluaran") }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    FilterChip(
+                        selected = type == TransactionType.INCOME,
+                        onClick = { type = TransactionType.INCOME },
+                        label = { Text("Pemasukan") }
+                    )
+                }
+
+                Text("Tanggal", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.DateRange, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(formatDate(selectedDate), color = Color.White)
+                }
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { selectedDate = it }
+                                showDatePicker = false
+                            }) { Text("OK") }
+                        },
+                        dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Batal") } }
+                    ) {
+                        DatePicker(state = datePickerState)
                     }
                 }
+
+                Text("Kategori", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    modifier = Modifier.height(180.dp)
+                ) {
+                    items(availableCats) { cat ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (selectedCat.name == cat.name) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else Color.Transparent)
+                                .clickable { selectedCat = cat }
+                                .padding(8.dp)
+                        ) {
+                            Text(cat.emoji, fontSize = 24.sp)
+                            Text(cat.name, fontSize = 10.sp, color = Color.LightGray, maxLines = 1)
+                        }
+                    }
+                }
+
+                Text("Deskripsi (Opsional)", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { raw ->
+                        if (raw.length <= 100) {
+                            description = raw
+                        } else {
+                            description = raw.take(100)
+                        }
+                    },
+                    label = { Text("Catatan...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 100.dp),
+                    maxLines = 4,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.Gray
+                    ),
+                    supportingText = {
+                        Text("${description.length}/100 karakter", color = Color.Gray)
+                    }
+                )
+
+                Text("Nominal", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { raw ->
+                        val digitsOnly = raw.filter { it.isDigit() }
+                        amountText = formatAmountDots(digitsOnly)
+                    },
+                    label = { Text("Rp") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
             }
         },
         confirmButton = {
-            if (step < totalSteps - 1) {
-                Button(onClick = { step++ }) { Text("Selanjutnya") }
-            } else {
-                Button(
-                    onClick = {
-                        val rawAmount = amountText.replace(".", "")
-                        val amount = rawAmount.toDoubleOrNull() ?: 0.0
-                        if (amount > 0) {
-                            onConfirm(type, selectedCat.name, selectedCat.emoji, description, amount, selectedDate)
-                        }
+            Button(
+                onClick = {
+                    val rawAmount = amountText.replace(".", "")
+                    val amount = rawAmount.toDoubleOrNull() ?: 0.0
+                    if (amount > 0) {
+                        onConfirm(type, selectedCat.name, selectedCat.emoji, description, amount, selectedDate)
                     }
-                ) { Text(if (transaction == null) "Simpan" else "Perbarui") }
-            }
+                }
+            ) { Text(if (transaction == null) "Simpan" else "Perbarui") }
         },
         dismissButton = {
-            if (step > 0) {
-                TextButton(onClick = { step-- }) { Text("Kembali") }
-            } else {
-                TextButton(onClick = onDismiss) { Text("Batal") }
-            }
+            TextButton(onClick = onDismiss) { Text("Batal") }
         }
     )
 }
