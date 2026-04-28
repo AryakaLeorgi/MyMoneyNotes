@@ -26,15 +26,15 @@ class TransactionViewModel(application: Application) : AndroidViewModel(applicat
         income - expense
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    fun addTransaction(type: TransactionType, category: String, emoji: String, description: String, amount: Double, date: Long) {
+    fun addTransaction(type: TransactionType, category: String, emoji: String, description: String, amount: Double, date: Long) = viewModelScope.launch {
         repository.insert(Transaction(type = type, category = category, emoji = emoji, description = description, amount = amount, date = date))
     }
 
-    fun updateTransaction(id: String, type: TransactionType, category: String, emoji: String, description: String, amount: Double, date: Long) {
+    fun updateTransaction(id: String, type: TransactionType, category: String, emoji: String, description: String, amount: Double, date: Long) = viewModelScope.launch {
         repository.update(Transaction(id = id, type = type, category = category, emoji = emoji, description = description, amount = amount, date = date))
     }
 
-    fun deleteTransaction(transaction: Transaction) {
+    fun deleteTransaction(transaction: Transaction) = viewModelScope.launch {
         repository.delete(transaction)
     }
 }
